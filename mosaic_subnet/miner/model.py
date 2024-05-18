@@ -13,7 +13,7 @@ from huggingface_hub import hf_hub_download
 
 base_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
 repo_name = "ByteDance/Hyper-SD"
-ckpt_name = "Hyper-SDXL-4steps-lora.safetensors"
+ckpt_name = "Hyper-SDXL-8steps-CFG-lora.safetensors"
 
 class DiffUsers(Module):
     def __init__(self, model_name: str = "stabilityai/sdxl-turbo") -> None:
@@ -26,7 +26,7 @@ class DiffUsers(Module):
         self.pipeline.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
         self.pipeline.fuse_lora()
         self.pipeline.scheduler = DDIMScheduler.from_config(self.pipeline.scheduler.config, timestep_spacing="trailing")
-        self.steps = 4
+        self.steps = 8
 
         self._lock = threading.Lock()
 
@@ -44,7 +44,7 @@ class DiffUsers(Module):
                 negative_prompt=negative_prompt,
                 num_inference_steps=self.steps,
                 generator=generator,
-                guidance_scale=0.0
+                guidance_scale=5.0
             ).images[0]
         buf = BytesIO()
         image.save(buf, format="png")
