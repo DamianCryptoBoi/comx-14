@@ -65,7 +65,10 @@ class DiffUsers(Module):
         if seed is None:
             seed = generator.seed()
         generator = generator.manual_seed(seed)
-        magic_prompt = self.magic_prompt(prompt)
+        try:
+            magic_prompt = self.magic_prompt(prompt)
+        except Exception as e:
+            magic_prompt = prompt
         with self._lock:
             image = self.pipeline(
                 prompt=magic_prompt,
