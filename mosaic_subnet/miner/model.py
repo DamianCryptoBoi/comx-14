@@ -43,7 +43,8 @@ class DiffUsers(Module):
                 "seed": seed
             }
             response = requests.post(url, json=data)
-            return response.json()["image"]
+            data = response.json()
+            return data["image"]
 
     @endpoint
     def get_metadata(self) -> dict:
