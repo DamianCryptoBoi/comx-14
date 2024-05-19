@@ -25,6 +25,8 @@ class SampleInput(BaseModel):
 
 class DiffUsers:
     def __init__(self):
+
+        print("setting up model")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
         ## 2 step lora
@@ -35,10 +37,11 @@ class DiffUsers:
         self.steps = 8
 
         self._lock = threading.Lock()
+        print("model setup done")
 
     def sample(self, input: SampleInput):
         prompt = input.prompt
-        steps = input.steps
+        # steps = input.steps
         negative_prompt = input.negative_prompt
         seed = input.seed
 
