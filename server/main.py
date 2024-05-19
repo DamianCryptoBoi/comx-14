@@ -55,7 +55,7 @@ class DiffUsers:
                 negative_prompt=negative_prompt,
                 num_inference_steps=self.steps,
                 generator=generator,
-                guidance_scale=5.0
+                guidance_scale=2.0
             ).images[0]
         buf = BytesIO()
         image.save(buf, format="png")
