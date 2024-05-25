@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
 import base64
@@ -8,8 +8,6 @@ import time
 import torch
 from diffusers import DiffusionPipeline, DDIMScheduler
 
-from communex.module.module import Module, endpoint
-
 from huggingface_hub import hf_hub_download
 
 from io import BytesIO
@@ -18,7 +16,7 @@ base_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
 repo_name = "ByteDance/Hyper-SD"
 ckpt_name = "Hyper-SDXL-8steps-CFG-lora.safetensors"
 
-CACHE_EXPIRATION_TIME = 30  # seconds
+MAX_CACHE_SIZE = 1 
 
 class SampleInput(BaseModel):
     prompt: str
@@ -31,7 +29,7 @@ class DiffUsers:
         print("setting up model")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
-        ## 2 step lora
+        # Initialize pipeline
         self.pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float16, variant="fp16").to(self.device)
         self.pipeline.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
         self.pipeline.fuse_lora()
@@ -40,24 +38,13 @@ class DiffUsers:
 
         self._lock = threading.Lock()
         self.cache = {}
-        self.cache_timestamps = {}
-        self._start_cache_cleaner()
+        self.cache_order = []
         print("model setup done")
 
-    def _start_cache_cleaner(self):
-        def cache_cleaner():
-            while True:
-                time.sleep(CACHE_EXPIRATION_TIME)
-                with self._lock:
-                    current_time = time.time()
-                    keys_to_delete = [key for key, timestamp in self.cache_timestamps.items()
-                                      if current_time - timestamp > CACHE_EXPIRATION_TIME]
-                    for key in keys_to_delete:
-                        del self.cache[key]
-                        del self.cache_timestamps[key]
-        
-        thread = threading.Thread(target=cache_cleaner, daemon=True)
-        thread.start()
+    def _manage_cache(self):
+        if len(self.cache_order) >= MAX_CACHE_SIZE:
+            oldest_key = self.cache_order.pop(0)
+            del self.cache[oldest_key]
 
     def sample(self, input: SampleInput):
         prompt = input.prompt
@@ -90,8 +77,9 @@ class DiffUsers:
         image_base64 = base64.b64encode(buf.read()).decode()
 
         with self._lock:
+            self._manage_cache()  # Manage cache size before adding a new item
             self.cache[cache_key] = image_base64
-            self.cache_timestamps[cache_key] = time.time()
+            self.cache_order.append(cache_key)
 
         return {"image": image_base64}
 
