@@ -45,6 +45,7 @@ class DiffUsers:
         self._lock = threading.Lock()
         print("model setup done")
 
+    @lru_cache(maxsize=10)
     def generate_images(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         with self._lock:
             generator = torch.Generator(self.device)
@@ -68,7 +69,7 @@ class DiffUsers:
     @lru_cache(maxsize=10)
     def _sample(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         with self._lock:
-            return self.gennerate_images(prompt, steps, negative_prompt, seed)
+            return self.generate_images(prompt, steps, negative_prompt, seed)
     
     def sample(self, input: SampleInput):
         return self._sample(input.prompt, input.steps, input.negative_prompt, input.seed)
