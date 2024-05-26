@@ -16,7 +16,7 @@ base_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
 repo_name = "ByteDance/Hyper-SD"
 ckpt_name = "Hyper-SDXL-8steps-CFG-lora.safetensors"
 
-MAX_CACHE_SIZE = 1 
+MAX_CACHE_SIZE = 3
 
 class SampleInput(BaseModel):
     prompt: str
