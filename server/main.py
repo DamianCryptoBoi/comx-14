@@ -45,6 +45,7 @@ class DiffUsers:
         self._lock = threading.Lock()
         print("model setup done")
 
+    @lru_cache(maxsize=10)
     def generate_images(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         generator = torch.Generator(self.device)
         if seed is None:
@@ -63,7 +64,6 @@ class DiffUsers:
         image = base64.b64encode(buf.read()).decode()
         return {"image": image}
 
-    @lru_cache(maxsize=10)
     def _sample(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         with self._lock:
             return self.generate_images(prompt, steps, negative_prompt, seed)
