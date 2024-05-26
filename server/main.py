@@ -14,14 +14,14 @@ from huggingface_hub import hf_hub_download
 
 from io import BytesIO
 
-# base_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
-# repo_name = "ByteDance/Hyper-SD"
-# ckpt_name = "Hyper-SDXL-8steps-CFG-lora.safetensors"
+base_model_id = "stabilityai/stable-diffusion-xl-base-1.0"
+repo_name = "ByteDance/Hyper-SD"
+ckpt_name = "Hyper-SDXL-8steps-CFG-lora.safetensors"
 
 class SampleInput(BaseModel):
     prompt: str
     steps: Optional[int] = 2
-    negative_prompt: Optional[str] = "worst quality, low quality, illustration, 3d, 2d, painting, cartoons, sketch"
+    negative_prompt: Optional[str] = "worst quality, low quality, illustration, 3d, 2d, painting, cartoons, sketch, nsfw"
     seed: Optional[int] = None
 
 class DiffUsers:
@@ -30,22 +30,22 @@ class DiffUsers:
         print("setting up model")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
-        # ## n step lora
-        # self.pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float16, variant="fp16").to(self.device)
-        # self.pipeline.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
-        # self.pipeline.fuse_lora()
-        # self.pipeline.scheduler = DDIMScheduler.from_config(self.pipeline.scheduler.config, timestep_spacing="trailing")
-        # self.steps = 8
-        # self.guidance_scale = 5
+        ## n step lora
+        self.pipeline = DiffusionPipeline.from_pretrained(base_model_id, torch_dtype=torch.float16, variant="fp16").to(self.device)
+        self.pipeline.load_lora_weights(hf_hub_download(repo_name, ckpt_name))
+        self.pipeline.fuse_lora()
+        self.pipeline.scheduler = DDIMScheduler.from_config(self.pipeline.scheduler.config, timestep_spacing="trailing")
+        self.steps = 8
+        self.guidance_scale = 5
 
-        self.pipeline = DiffusionPipeline.from_pretrained("SG161222/RealVisXL_V4.0_Lightning",torch_dtype=torch.float16, variant="fp16").to(self.device)
-        self.steps = 4
-        self.guidance_scale = 2
+        # self.pipeline = DiffusionPipeline.from_pretrained("SG161222/RealVisXL_V4.0_Lightning",torch_dtype=torch.float16, variant="fp16").to(self.device)
+        # self.steps = 4
+        # self.guidance_scale = 2
 
         self._lock = threading.Lock()
         print("model setup done")
 
-    @lru_cache(maxsize=10)
+    @lru_cache(maxsize=5)
     def generate_image(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         generator = torch.Generator(self.device)
         if seed is None:
