@@ -46,7 +46,7 @@ class DiffUsers:
         print("model setup done")
 
     @lru_cache(maxsize=10)
-    def generate_images(self, prompt: str, steps: int, negative_prompt: str, seed: int):
+    def generate_image(self, prompt: str, steps: int, negative_prompt: str, seed: int):
         generator = torch.Generator(self.device)
         if seed is None:
             seed = generator.seed()
@@ -63,13 +63,10 @@ class DiffUsers:
         buf.seek(0)
         image = base64.b64encode(buf.read()).decode()
         return {"image": image}
-
-    def _sample(self, prompt: str, steps: int, negative_prompt: str, seed: int):
-        with self._lock:
-            return self.generate_images(prompt, steps, negative_prompt, seed)
     
     def sample(self, input: SampleInput):
-        return self._sample(input.prompt, input.steps, input.negative_prompt, input.seed)
+        with self._lock:
+            return self.generate_image(input.prompt, input.steps, input.negative_prompt, input.seed)
 
 
 app = FastAPI()
