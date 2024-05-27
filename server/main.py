@@ -71,7 +71,7 @@ class DiffUsers:
         except Exception as e:
             print(e)
             with self._lock:
-                    return self.generate_image(input.prompt, input.steps, input.negative_prompt, input.seed)
+                return self.generate_image(input.prompt, input.steps, input.negative_prompt, input.seed)
 
 
 app = FastAPI()
